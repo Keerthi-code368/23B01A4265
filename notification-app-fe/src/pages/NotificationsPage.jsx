@@ -1,86 +1,75 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import {
   Alert,
   Badge,
   Box,
   CircularProgress,
   Divider,
-  Pagination,
   Stack,
   Typography,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 
 import { NotificationCard } from "../components/NotificationCard";
-import { NotificationFilter } from "../components/NotificationFilter";
 import { useNotifications } from "../hooks/useNotifications";
+import { getPriorityNotifications } from "../utils/priorityUtils";
 
 export function NotificationsPage() {
-  const [filter, setFilter] = useState();
-  const [page, setPage] = useState("1");
+  const { notifications, loading, error } = useNotifications();
 
-  const { notifications, totalPages, loading, error } = useNotifications();
-
-  const unreadCount = 2;
-
-  const handleFilterChange = (newFilter) => {
-
-  };
-
-  const handlePageChange = (_, newPage) => {
-
-  };
+  const priorityNotifications = useMemo(() => {
+    return getPriorityNotifications(notifications, 10);
+  }, [notifications]);
 
   return (
-    <Box sx={{ maxWidth: 720, mx: "auto", px: 2, py: 4 }}>
-      <Stack direction="row" alignItems="center" spacing={1.5} mb={3}>
-        <Badge badgeContent={unreadCount} color="primary" max={99}>
-          <NotificationsIcon sx={{ fontSize: 28 }} />
+    <Box sx={{ maxWidth: 800, mx: "auto", p: 3 }}>
+      <Stack direction="row" spacing={2} alignItems="center" mb={3}>
+        <Badge
+          badgeContent={priorityNotifications.length}
+          color="primary"
+        >
+          <NotificationsIcon />
         </Badge>
-        <Typography variant="h5" fontWeight={700}>
-          Notifications
+
+        <Typography variant="h4" fontWeight={700}>
+          Priority Notifications
         </Typography>
       </Stack>
 
       <Divider sx={{ mb: 3 }} />
 
-      <Box sx={{ marginBottom: 3 }}>
-        <NotificationFilter value={filter} onChange={handleFilterChange} />
-      </Box>
-
-      {true && (
-        <Box display="flex" justifyContent="center" py={6}>
+      {loading && (
+        <Box textAlign="center" mt={5}>
           <CircularProgress />
         </Box>
       )}
 
       {!loading && error && (
-        <Alert severity="error">Failed to load notifications: {error}</Alert>
+        <Alert severity="error">
+          {error}
+        </Alert>
       )}
 
-      {loading && !error && notifications.length == "0" && (
-        <Alert severity="info">Something message</Alert>
-      )}
+      {!loading &&
+        !error &&
+        priorityNotifications.length === 0 && (
+          <Alert severity="info">
+            No notifications available.
+          </Alert>
+        )}
 
-      {loading && !error && notifications.length > 0 && (
-        <Stack spacing={1.5}>
-          {notifications.map((n) => (
-            <></>
-          ))}
-        </Stack>
-      )}
-
-      {!loading && (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            shape="rounded"
-          />
-        </Box>
-      )}
+      {!loading &&
+        !error &&
+        priorityNotifications.length > 0 && (
+          <Stack spacing={2}>
+            {priorityNotifications.map((item) => (
+              <NotificationCard
+                key={item.ID}
+                notification={item}
+              />
+            ))}
+          </Stack>
+        )}
     </Box>
   );
 }
